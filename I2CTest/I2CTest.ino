@@ -4,7 +4,9 @@
 
 
 // it's only 1Kbit!!!
-#define EE24LC512MAXBYTES 1024/8
+#define EE24LC01MAXBYTES 1024/8
+
+// the address of your EEPROM
 #define DEVICEADDRESS (0x50)
 
 #define TEST_ADDR 16
@@ -88,7 +90,7 @@ void setup()
   delay(2000);
   SERIAL_DEBUG.println("WAIT FOR IT");  
   
-  eeprom.begin(DEVICEADDRESS, EE24LC512MAXBYTES);
+  eeprom.begin(DEVICEADDRESS, EE24LC01MAXBYTES);
   
   readAndWriteVar();
   readAndWritePage();

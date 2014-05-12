@@ -9,7 +9,23 @@
 
 void EEPROM_I2C::begin(byte deviceAddress, unsigned int deviceSize) {
   this->deviceAddress = deviceAddress;
-  this->deviceSize = deviceSize;
+   
+  // Chips 16Kbit (2048KB) or smaller only have one-word addresses.
+  // Also try to guess page size from device size (going by Microchip 24LCXX datasheets here).
+  if (deviceSize > 256 * 8) {
+    this->isAddressSizeTwoWords = true;
+    this->pageSize = 32;
+  }
+  else {
+    this->isAddressSizeTwoWords = false;
+
+    if (deviceSize <= 256) {
+      this->pageSize = 8;
+    }
+    else {
+      this->pageSize = 16;
+    }
+  }
   
   Wire.begin();
 }
@@ -57,8 +73,12 @@ void EEPROM_I2C::readBuffer(unsigned int eeaddress, byte *buffer, int length ){
 
 void EEPROM_I2C::_beginTransmission(unsigned int eeaddress){
   Wire.beginTransmission(this->deviceAddress);
-  Wire.write((eeaddress >> 8));    // Address High Byte
-  Wire.write((eeaddress & 0xFF));  // Address Low Byte
+
+  if (this->isAddressSizeTwoWords) {
+    Wire.write((eeaddress >> 8));    // Address High Byte    
+  }
+
+  Wire.write((eeaddress & 0xFF));  // Address Low Byte (or only byte for chips 16K or smaller that only have one-word addresses)
 }
 void EEPROM_I2C::_endTransmission(){
   Wire.endTransmission();

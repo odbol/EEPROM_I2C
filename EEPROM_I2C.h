@@ -12,8 +12,11 @@ class EEPROM_I2C{
 	public:
 		/**
 		 * Begins the Wire interface to the given device.
+		 *
+		 * It will try to guess page size and address word size based on the size of the device.
+		 * 
 		 * @param deviceAddress Byte address of the device.
-		 * @param deviceSize    Max size in bytes of the device.
+		 * @param deviceSize    Max size in bytes of the device (divide your device size in Kbits by 8)
 		 */
 		void begin(byte deviceAddress, unsigned int deviceSize);
 		
@@ -32,7 +35,9 @@ class EEPROM_I2C{
 
 	private:
 		byte deviceAddress;
-		unsigned int deviceSize;
+		byte pageSize;
+
+		bool isAddressSizeTwoWords;
 };
 
 #endif
