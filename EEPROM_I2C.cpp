@@ -48,16 +48,28 @@ byte EEPROM_I2C::readByte(unsigned int eeaddress){
 }
 
 void EEPROM_I2C::writePage(unsigned int eeaddress, byte* data, byte length ){
-  this->_beginTransmission(eeaddress);
-  
-  byte c;
-  
-  for ( c = 0; c < length; c++)
-    Wire.write(data[c]);
-  
-  this->_endTransmission();
-  
-  delay(10);                           // need some delay
+
+
+        
+  byte c = 0;
+  while (c < length) {
+
+    this->_beginTransmission(eeaddress + c);
+
+    while (c < length) {
+      
+      Wire.write(data[c++]);
+
+      byte bytesPastPageBoundary = (c + eeaddress) % this->pageSize;
+      if (bytesPastPageBoundary == 0) {
+        break;
+      }
+    }
+    
+    this->_endTransmission();
+    
+    delay(10);                           // need some delay
+  }
 }
 
 void EEPROM_I2C::readBuffer(unsigned int eeaddress, byte *buffer, int length ){

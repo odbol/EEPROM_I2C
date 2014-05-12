@@ -13,7 +13,17 @@
 
 // this must start on a page boundary!
 #define TEST_PAGE_ADDR 0
-#define BUFFER_LEN 4
+#define SHORT_BUFFER_LEN 4
+
+// this tests multi-page writes
+#define LONG_BUFFER_LEN 64
+// make sure it's aligned on a page boundary
+#define LONG_TEST_PAGE_ADDR (max(16, TEST_PAGE_ADDR + SHORT_BUFFER_LEN))
+
+
+// this tests multi-page writes that don't start on a boundary
+#define UNALIGNED_BUFFER_LEN 35
+#define UNALIGNED_TEST_PAGE_ADDR (LONG_TEST_PAGE_ADDR + LONG_BUFFER_LEN + 5)
 
 #define SERIAL_DEBUG SerialUSB
 
@@ -44,37 +54,32 @@ void readAndWriteVar() {
 
 }
 
-void readAndWritePage() { 
-    SERIAL_DEBUG.println("----------------------------------------------");     
-    SERIAL_DEBUG.print("PAGE: writing and retreiving EEPROM Page on I2C at address ");
-    SERIAL_DEBUG.println(DEVICEADDRESS);
-    SERIAL_DEBUG.println("----------------------------------------------");  
-
-
-    byte testBuffer[BUFFER_LEN + 1];
+void readAndWritePage(unsigned int pageAddress, int bufferLen) { 
+    // always make the maximum size, just don't use all of it.
+    byte testBuffer[LONG_BUFFER_LEN + 1];
 
     // null-terminate for printing!
-    testBuffer[BUFFER_LEN] = NULL;
+    testBuffer[bufferLen] = NULL;
 
-    eeprom.readBuffer(TEST_PAGE_ADDR, testBuffer, BUFFER_LEN);
+    eeprom.readBuffer(pageAddress, testBuffer, bufferLen);
 
 
-    SERIAL_DEBUG.print("last value: ");
+    SERIAL_DEBUG.print("last value:  ");
     SERIAL_DEBUG.println((char*)testBuffer);
 
-    for (int i = 0; i < BUFFER_LEN; i++) {
+    for (int i = 0; i < bufferLen; i++) {
       // use max to init to all AAAA's on first run.
-      testBuffer[i] = max('A', testBuffer[i] + i + 1);
+      testBuffer[i] = max('A', (testBuffer[i] + ((i % 4) + 1) % 'z'));
     }
 
-    eeprom.writePage(TEST_PAGE_ADDR, testBuffer, BUFFER_LEN);
+    eeprom.writePage(pageAddress, testBuffer, bufferLen);
 
     SERIAL_DEBUG.print("updating to: ");
     SERIAL_DEBUG.println((char*)testBuffer);
     delay(10);
 
-    eeprom.readBuffer(TEST_PAGE_ADDR, testBuffer, BUFFER_LEN);
-    SERIAL_DEBUG.print("new value: ");
+    eeprom.readBuffer(pageAddress, testBuffer, bufferLen);
+    SERIAL_DEBUG.print("new value:   ");
     SERIAL_DEBUG.println((char*)testBuffer);    
 
 }
@@ -93,7 +98,34 @@ void setup()
   eeprom.begin(DEVICEADDRESS, EE24LC01MAXBYTES);
   
   readAndWriteVar();
-  readAndWritePage();
+
+  SERIAL_DEBUG.println("----------------------------------------------");     
+  SERIAL_DEBUG.println("PAGE:");     
+  SERIAL_DEBUG.print(" writing and retreiving EEPROM Page on I2C at address ");
+  SERIAL_DEBUG.println(DEVICEADDRESS);
+  SERIAL_DEBUG.println("----------------------------------------------");  
+
+  readAndWritePage(TEST_PAGE_ADDR, SHORT_BUFFER_LEN);
+
+
+
+  SERIAL_DEBUG.println("----------------------------------------------");     
+  SERIAL_DEBUG.println("MULTI-PAGE:");     
+  SERIAL_DEBUG.print("writing and retreiving EEPROM Pages on I2C at address ");
+  SERIAL_DEBUG.println(DEVICEADDRESS);
+  SERIAL_DEBUG.println("----------------------------------------------");  
+
+  readAndWritePage(LONG_TEST_PAGE_ADDR, LONG_BUFFER_LEN);
+
+
+
+  SERIAL_DEBUG.println("----------------------------------------------");     
+  SERIAL_DEBUG.println("MULTI-PAGE UNALINGED: ");     
+  SERIAL_DEBUG.print("writing and retreiving EEPROM Pages on I2C at address ");
+  SERIAL_DEBUG.println(DEVICEADDRESS);
+  SERIAL_DEBUG.println("----------------------------------------------");  
+
+  readAndWritePage(UNALIGNED_TEST_PAGE_ADDR, UNALIGNED_BUFFER_LEN);
 }
 
 void loop()
