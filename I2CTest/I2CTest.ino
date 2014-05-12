@@ -7,9 +7,10 @@
 #define EE24LC512MAXBYTES 1024/8
 #define DEVICEADDRESS (0x50)
 
-#define TEST_ADDR 1
+#define TEST_ADDR 16
 
-#define TEST_PAGE_ADDR 2
+// this must start on a page boundary!
+#define TEST_PAGE_ADDR 0
 #define BUFFER_LEN 4
 
 #define SERIAL_DEBUG SerialUSB
@@ -84,7 +85,7 @@ void setup()
   }
 
   SERIAL_DEBUG.println("IT IS BEGINNING"); 
-  delay(9000);
+  delay(2000);
   SERIAL_DEBUG.println("WAIT FOR IT");  
   
   eeprom.begin(DEVICEADDRESS, EE24LC512MAXBYTES);
